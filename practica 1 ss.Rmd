@@ -1,0 +1,183 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+##  Laboratorio Conversión A/D: Muestreo
+
+### Aplicación práctica 1
+
+Se dispone de dos ficheros de audio, ce44100.wav y ce8000.wav muestreados a frecuencias 44.1 kHz y
+8 kHz respectivamente.
+
+
+1. Primero instala el paquete tuneR install.packages("tuneR")
+2. A continuaci´on el paquete sound install.packages("sound")
+3. Carga los paquetes en R con la funcion library(tuneR)
+
+```{r}
+#install.packages("tuneR")
+#install.packages("sound")
+#install.packages("seewave")
+library(tuneR)
+library(sound)
+library(seewave)
+```
+
+
+4. Lee el fichero ce44100.wav con R utilizando la función readWave, cuyo formato es: y = readWave("file.wav").
+
+```{r}
+y = readWave("ce44100.wav")
+```
+
+
+5. Escúchalo con la función play("file.wav"). Para ello antes deber´as de configurar que software de reproducción de audio se va a utilizar. Utiliza los comandos findWavPlayer() y setWavPlayer(’aplay’). Aplay es un ejemplo de software disponible en linux.
+
+
+```{r}
+#findWavPlayer() 
+#setWavPlayer("aplay")
+#setWavPlayer("playwave")
+#setWavPlayer("mplay32/play")
+#setWavPlayer("mplay32")
+#play("ce44100.wav")
+```
+
+
+
+6. Vamos a simular un muestreo de la señal original a 22050 Hz y a 11025 Hz de la siguiente forma: y22050 = downsample(y,22050) y y11025 = downsample(y,11025). Escucha estas dos nuevas señales y comenta los resultados. Para oirlas deber´as grabarlas en formato wav y reproducirlas con
+la función play("file.wav")
+
+```{r}
+# y22050 = downsample(y,22050)
+# y11025 = downsample(y,11025)
+# 
+# savewav(wave=y22050, f=22050, filename = "y22050.wav", rescale = NULL) #De esta manera el audio se escucha con mas claridad 
+# 
+# savewav(wave=y11025, f=11025, filename = "y11025.wav", rescale = NULL)#Se escucha con menos claridad que el audio original pero con mas claridad respecto al audio anterior
+# 
+# play("y22050.wav")
+# play("y11025.wav")
+```
+
+SOLUCION:
+En el nuevo archivo de y22050.wav el audio se escucha con mas claridad 
+Y en el archivo y11025.wav el audio se escucha con menos definició respecto al anterior.
+
+
+7. Utiliza ahora el fichero ce8000.wav y reproduce su contenido a la frecuencia a la que se ha muestreado, y cambiando ´esta por ejemplo a 20 kHz y a 4 kHz (como en el ejemplo anterior). ¿A que crees que se deben los efectos producidos?
+
+```{r}
+v = readWave("ce8000.wav")
+v8000 = downsample(v,8000)
+
+#cambiando esta por 20 y 4:
+savewav(wave=v8000, f=20000, filename = "v20.wav", rescale = NULL)
+#play("v20.wav")
+
+savewav(wave=v8000, f=4000, filename = "v4.wav", rescale = NULL)
+#play("v4.wav")
+
+```
+
+SOLUCION:
+Al cambiar la frecuencia a mas baja lo que ocurre es que hay menos definicion. 
+
+Esto se debe a que el minimo de la frecuencia de adquisicion tiene que ser mayor del doble de la frecuencia maxima que quieres adquirir. 
+Si elegimos mas frecuencia de adquisicion se representará con mas definición y por tanto se escuchara con mas claridad el sonido.
+El periodo de adquisicion, por otra parte, esta relacionado con la frecuencia de adquisision porque es su inversa.
+
+
+
+Cuano tengo la señal en el mundo digital y la quiero representar en el mundo real, utilizo los reconstructores. Que tambien tienen una frecuencia. (DIBUJO)
+
+
+Es decir, la frecuencia de adquision y reconstruccion estan relacionadas con la calidad en la que se escuchará la señal y representarla.
+
+
+
+### ConversiÓn A/D: Cuantificación
+
+En esta parte se analizar´an los efectos de la cuantificaci´on en la conversi´on anal´ogica digital para ello vamos a utilizar la función quanti cuyos argumentos son los siguientes:
+                                    xq = quanti(data,N,m)
+siendo data la se˜nal original (un solo canal), N el n´umero de bits (2N niveles), m el rango de entrada (entre +m y -m), y xq la salida cuantificada. La cuantificaci´on se realiza por truncamiento.
+
+pierdes informacion por la amplitud 
+
+
+
+1. Efecto sobre las formas de onda. Se estudiará el efecto de la cuantificación sobre el aspecto una sinusoide. 
+Para ello genera 3 períodos de una sinusoide de amplitud 4, frecuencia 50 Hz y frecuencia de muestreo 1000 Hz y cuantifica ´esta suponiendo que el parámetro m = 5. 
+Prueba para valores de 4 a 16 bits. 
+
+Representa la señal de error de cuantificación en cada caso (señal formada por el error en cada una de las muestras). 
+
+Prueba tambi´en a cuantificar la señal sinusoidal con una frecuencia de muestreo de 100 Hz y repres´entala junto con la original.
+```{r}
+
+#Creación de la sinusoide:
+rm
+(list=ls())
+f1 = 50; 
+#Frecuencia de la primera sinusoide (Hz)
+T1 = 0.001; 
+
+# Periodo de muestreo 1 (s)
+t = 0.05; 
+
+# Tiempo total de muestreo (s)
+ts1= seq(0,t,T1);
+x1 = sin(2*pi*f1*ts1);
+par(col="blue")
+plot(ts1,x1,type = "l")
+
+
+quanti <- function(data, N, m){
+ LSB <-m/((2^N)-1)
+ dataout <- seq(from =0, to =0, length.out = length(data))
+  for (i in 1:length(data)) {
+    if (data[i]>m) {
+  dataout[i] <-m
+  }else{
+  dataout[i] <-(trunc(data[i]/LSB))*LSB
+  }
+  }
+ return(dataout)
+}
+
+
+
+xq = quanti(data,4:16,5)
+
+plot(ts1,xq)
+
+
+```
+
+
+
+2. Efecto de la cuantificaci´on sobre una se˜nal de audio. Para ello vamos a utilizar el fichero p44100.wav. Lee dicho fichero con la instrucci´on y = readWave("p44100.wav") y escucha su contenido con play("p44100.wav . Repite el proceso cuantificando la se˜nal a 8, 4, 3 y 2 bits (utiliza como valor de m el valor m´aximo en valor absoluto de y y cuantifica cada uno de los canales del audio). ¿A qu´e se debe el ruido que se escucha? ¿Se podr´ıa resolver este problema aumentando la frecuencia de muestreo?
+
+```{r}
+y = readWave("p44100.wav")
+play("p44100.wav")
+```
+
+
+
+SOLUCION A LA PREGUNTA:
+  
+El ruido que se escucha se debe a ......
+
+Se podria resolver aumentando la frecuencia de muestreo.
+
+
+
+
+
+###  Opcional: Conversión D/A : Reconstructores
+
+
+
+
